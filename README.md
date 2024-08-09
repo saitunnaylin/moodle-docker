@@ -40,7 +40,7 @@ This image download and setup an moodle environment based on enironment variable
  ```   
 ### Pull from moodle
 ```
-    docker exec -it <server_container> bash -c "cd /var/www/html/moodle && git branch --track MOODLE_404_STABLE origin/MOODLE_<VERSION>_STABLE && git checkout MOODLE_<VERSION>_STABLE -f && git pull" 
+    docker exec -it <server_container> bash -c "cd /var/www/html/moodle && git branch --track MOODLE_<VERSION>_STABLE origin/MOODLE_<VERSION>_STABLE && git checkout MOODLE_<VERSION>_STABLE -f && git pull" 
 ```
 ### Upgrade moodle
  ```

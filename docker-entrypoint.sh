@@ -109,10 +109,12 @@ EOPHP
 
 cd /var/www/html
 
-: ${MOODLE_SHARED:=/var/www/html/moodledata}
-if [ ! -d "$MOODLE_SHARED" ]; then
-    echo "Created $MOODLE_SHARED directory."
-    mkdir -p $MOODLE_SHARED
+: ${MOODLE_DATA:=/var/www/html/moodledata}
+if [ ! -d "$MOODLE_DATA" ]; then
+    echo "Created $MOODLE_DATA directory."
+    mkdir -p $MOODLE_DATA /var/local/cache && \
+    chown -R apache:apache $MOODLE_DATA && \
+    chmod -R 777 $MOODLE_DATA /var/local/cache 
 fi
 
 # Initial config setup
@@ -135,7 +137,7 @@ fi
 
 if [ ! -e $CONF ]; then
   
-	touch $CONF
+	mv /opt/moodle /var/www/html/moodle && touch $CONF
 
 	cat <<-EOF >> $CONF
 		<?php
@@ -157,7 +159,7 @@ if [ ! -e $CONF ]; then
 		);
 
 		\$CFG->wwwroot = "$MOODLE_URL";
-		\$CFG->dataroot = '/var/www/html/moodledata';
+		\$CFG->dataroot = '$MOODLE_DATA';
 		\$CFG->admin = 'admin';
 	
 		\$CFG->session_handler_class = '\core\session\redis';
@@ -172,12 +174,13 @@ if [ ! -e $CONF ]; then
 	EOF
 
 	echo "ServerName $MOODLE_SERVER_NAME" >> /etc/httpd/conf/httpd.conf
+	chmod 0755 /etc/cron.d/moodle-cron && crontab /etc/cron.d/moodle-cron
  fi
 
 # Install database if installed file doesn't exist
-if [ ! -e "$MOODLE_SHARED/installed" -a ! -f "$MOODLE_SHARED/install.lock" ]; then
+if [ ! -e "$MOODLE_DATA/installed" -a ! -f "$MOODLE_DATA/install.lock" ]; then
     echo "Moodle database is not initialized. Initializing..."
-    touch $MOODLE_SHARED/install.lock
+    touch $MOODLE_DATA/install.lock
     sudo -E -u apache php /var/www/html/moodle/admin/cli/install_database.php \
         --agree-license \
         --adminuser=$MOODLE_ADMIN_USER \
@@ -204,19 +207,8 @@ if [ ! -e "$MOODLE_SHARED/installed" -a ! -f "$MOODLE_SHARED/install.lock" ]; th
         sudo -E -u apache php /var/www/html/moodle/admin/cli/cfg.php --name=noreplyaddress --set=$MOODLE_NOREPLY_ADDRESS
     fi
 
-    touch $MOODLE_SHARED/installed
-    rm $MOODLE_SHARED/install.lock
-    echo "Done."
-fi
-
-
-if [ "$MOODLE_UPDATE" = 'true' -a ! -f "$MOODLE_SHARED/update.lock" ]; then
-    echo "Updating Moodle..."
-    touch $MOODLE_SHARED/update.lock
-    sudo -E -u apache /usr/local/bin/php /var/www/html/moodle/admin/cli/maintenance.php --enable
-    sudo -E -u apache /usr/local/bin/php /var/www/html/moodle/admin/cli/upgrade.php
-    sudo -E -u apache /usr/local/bin/php /var/www/html/moodle/admin/cli/maintenance.php --disable
-    rm $MOODLE_SHARED/update.lock
+    touch $MOODLE_DATA/installed
+    rm $MOODLE_DATA/install.lock
     echo "Done."
 fi
 

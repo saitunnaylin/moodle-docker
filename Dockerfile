@@ -14,6 +14,7 @@ RUN dnf -y update && \
     dnf -y module install php:remi-8.2 && \
     dnf -y install \
     netcat \
+    cronie \
     git \
     php \
     php-cli \
@@ -38,29 +39,34 @@ RUN dnf -y update && \
     mariadb \
     httpd \
     sudo \
+    mod_ssl \
     unzip && \
     dnf clean all && dnf -y update
+
+# Create moodle directory
+RUN mkdir -p /opt/moodle
+
+# Clone the Moodle repository
+RUN git clone -b $MOODLE_VERSION https://github.com/moodle/moodle.git /opt/moodle
+
+# Set permission for them and plugin
+RUN chmod -R 777 /opt/moodle/theme && \
+    chmod -R 777 /opt/moodle/mod
+
+# Create SSL Cert
+RUN mkdir -p /etc/pki/tls/private && chmod 700 /etc/pki/tls/private
+
+# Generate Self Sign Certificate
+RUN openssl req -subj '/CN=localhost/O=Moodle/C=US' -new -newkey rsa:4096 -sha256 -days 3650 -nodes -x509 -keyout /etc/pki/tls/private/localhost.key -out /etc/pki/tls/certs/localhost.crt
 
 # Create php-fpm directory
 RUN mkdir -p /run/php-fpm
 
-# Create moodle directory
-RUN mkdir -p /var/www/html/moodle
-
-# Clone the Moodle repository
-RUN git clone -b $MOODLE_VERSION https://github.com/moodle/moodle.git /var/www/html/moodle
-
-# Set permissions for moodledata
-RUN mkdir -p /var/www/html/moodledata /var/local/cache && \
-    chown -R apache:apache /var/www/html/moodledata && \
-    chmod -R 777 /var/www/html/moodledata /var/local/cache 
-    
 # Create docker entry folder
 RUN mkdir /docker-entrypoint.d
 
-# Set permission for them and plugin
-RUN chmod -R 777 /var/www/html/moodle/theme && \
-    chmod -R 777 /var/www/html/moodle/mod
+# Copy hello-cron file to the cron.d directory
+COPY moodle-cron /etc/cron.d/moodle-cron
 
 # Copy docker entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh
@@ -72,10 +78,10 @@ COPY php.ini /etc/php.ini
 COPY moodle.conf /etc/httpd/conf.d/moodle.conf
 
 # Volume
-VOLUME /var/www/html
+VOLUME /var
 
 # Expose port 80
-EXPOSE 80
+EXPOSE 80 443
 
 # Entrypoint script
 ENTRYPOINT ["/docker-entrypoint.sh"]
