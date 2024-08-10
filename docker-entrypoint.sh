@@ -174,7 +174,7 @@ if [ ! -e $CONF ]; then
 	EOF
 
 	echo "ServerName $MOODLE_SERVER_NAME" >> /etc/httpd/conf/httpd.conf
-	chmod 0755 /etc/cron.d/moodle-cron && crontab /etc/cron.d/moodle-cron
+	chmod 0755 /etc/cron.d/moodle-cron && crontab -u apache /etc/cron.d/moodle-cron
  fi
 
 # Install database if installed file doesn't exist
