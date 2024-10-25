@@ -136,7 +136,7 @@ if [ -z ${MOODLE_REDIS_PORT} ]; then
 fi
 
 if [ ! -e $CONF ]; then
-  
+    echo "Preparing for inital config setup ....."
 	mv /opt/moodle /var/www/html/moodle && touch $CONF
 
 	cat <<-EOF >> $CONF
@@ -174,7 +174,6 @@ if [ ! -e $CONF ]; then
 	EOF
 
 	echo "ServerName $MOODLE_SERVER_NAME" >> /etc/httpd/conf/httpd.conf
-	chmod 0755 /etc/cron.d/moodle-cron && crontab -u apache /etc/cron.d/moodle-cron
  fi
 
 # Install database if installed file doesn't exist
@@ -213,6 +212,7 @@ if [ ! -e "$MOODLE_DATA/installed" -a ! -f "$MOODLE_DATA/install.lock" ]; then
 fi
 
 /usr/sbin/php-fpm -D
+while true; do $(sudo -u apache /usr/bin/php  /var/www/html/moodle/admin/cli/cron.php >/dev/null); done &
 
 # Run additional init scripts
 DIR=/docker-entrypoint.d

@@ -14,7 +14,6 @@ RUN dnf -y update && \
     dnf -y module install php:remi-8.2 && \
     dnf -y install \
     netcat \
-    cronie \
     git \
     php \
     php-cli \
@@ -64,9 +63,6 @@ RUN mkdir -p /run/php-fpm
 
 # Create docker entry folder
 RUN mkdir /docker-entrypoint.d
-
-# Copy hello-cron file to the cron.d directory
-COPY moodle-cron /etc/cron.d/moodle-cron
 
 # Copy docker entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh
