@@ -1,5 +1,5 @@
 # Use AlmaLinux as the base image
-FROM almalinux:8.10
+FROM almalinux:8
 
 # Set environment variables
 ENV MOODLE_VERSION=MOODLE_405_STABLE
@@ -46,7 +46,7 @@ RUN dnf -y update && \
 RUN mkdir -p /opt/moodle
 
 # Clone the Moodle repository
-RUN git clone -b $MOODLE_VERSION https://github.com/moodle/moodle.git /opt/moodle
+RUN git clone --depth 1 -b $MOODLE_VERSION https://github.com/moodle/moodle.git /opt/moodle
 
 # Set permission for them and plugin
 RUN chmod -R 777 /opt/moodle/theme && \
